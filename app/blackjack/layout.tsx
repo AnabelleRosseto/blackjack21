@@ -20,14 +20,17 @@ const GameLayout = ({ children }: GameLayoutProps) => {
     router.push('/login')
   }
 
-  return <div className="flex flex-col gap-1 justify-start content-start min-h-screen">
+  return <div className="flex flex-col gap-1 justify-start content-start min-h-svh">
     <header className="flex flex-row justify-around content-center text-center p-2">
-      <h1 className=" text-xl text-blue-500">
+      <h1 className=" text-xl rounded px-2 border-2 border-pink-400 text-pink-400">
         Vinte e Um
       </h1>
-      <button className="text-xl text-gray-900 dark:text-gray-100 bg-neutral-100 dark:bg-neutral-800 " onClick={logout}>Logout</button>
+      <button 
+        className="text-xl px-2 rounded text-gray-900 dark:text-gray-100 bg-neutral-100 dark:bg-neutral-800 " 
+        onClick={logout}
+        >Logout</button>
     </header>
-    <main className="px-2">
+    <main className="px-2 grow">
       {children}
     </main>
   </div>

@@ -56,18 +56,20 @@ async function fetchCard(deck_id: string, count: number) {
 const Game = () => {
 
     const [deck, setDeck] = useState<Deck | null>(null);
-    
+
+    //cards e pontuações
     const [playerCards, setPlayerCards] = useState<Card[]>([]);
     const [compCards, setCompCards] = useState<Card[]>([]);
     const [playerSum,setPlayerSum] = useState<number>(0);
     const [compSum, setCompSum] = useState<number>(0);
     
+    //resultado (texto mostrado)
     const [gameResult, setGameResult] = useState<string>("");
+
+    //variáveis de controle
     const [gameRunning, setGameRunning] = useState<boolean>(false);
     const [runningComp, setRunningComp] = useState<boolean>(false)
-    
-    console.log(playerSum)
-    //Cria um novo deck
+    const [loading, setLoading] = useState<boolean>(false);
 
     function getCardNumberValue(value: string){
         
@@ -83,18 +85,19 @@ const Game = () => {
     }
 
     async function drawCard() : Promise<Card[]>{
+        setLoading(true)
         const cc : Card[] = await fetchCard(deck!.deck_id, 1).then((card) => {
             
             card[0].value = getCardNumberValue(card[0].value)
-
             return card;
-        });
+        }).catch(() => setGameResult("Não conseguimos comprar uma carta nova :(")
+    ).finally(() => setLoading(false));
         return cc;
     }
 
     //Compra uma carta do deck e aumenta a pontuação do jogador.
     function playerBuyCard() {
-        fetchCard(deck!.deck_id, 1).then((card) => setPlayerCards((prev) => {
+        drawCard().then((card) => setPlayerCards((prev) => {
             
             card[0].value = getCardNumberValue(card[0].value);
             
@@ -115,7 +118,6 @@ const Game = () => {
         if (!runningComp){
             setRunningComp(true);
         }
-        console.log("a")
         
         if (csum < 17) 
         {
@@ -123,7 +125,6 @@ const Game = () => {
                 let nc:Card[] = [...ccard, ...c]
                 setCompCards((prev) => {
                     const newCards = [...prev, c[0]];
-                    console.log("new cards: " + newCards);
                     const sum = newCards.reduce((acc,c) => acc + parseInt(c.value), 0);
                     setCompSum(sum);
                     
@@ -139,10 +140,6 @@ const Game = () => {
         {
             endGame(csum);
         }
-        // O retorno da função é a Promise resultante do fetchCard.
-        
-        
-    
     }    
     
 
@@ -171,12 +168,15 @@ const Game = () => {
         setCompCards([]);
         setPlayerSum(0);
         setCompSum(0);
+        setLoading(true)
         setGameResult("Esperando nova rodada");
         setRunningComp(false)
         fetchDeck().then((data) => setDeck(data)).then(() => {
             setGameResult("FaçaSuaAposta");
             setGameRunning(true);
-        }).catch(() => setGameResult("Não conseguimos achar o baralho de cartas..."));
+        }
+        ).catch(() => setGameResult("Não conseguimos achar o baralho de cartas :(")
+        ).finally(() => setLoading(false));
     }
 
 
@@ -185,20 +185,41 @@ const Game = () => {
 
 
     return (
-        <div className="flex flex-col justify-center items-center gap-4 w-full text-black dark:text-white">
+        <div className="flex flex-col justify-center items-center gap-4 w-full max-h-fit text-black dark:text-white">
             <h4>deck id: {deck?.deck_id}</h4>
 
             <h2>{gameResult}</h2>
             
             <button
-            className="bg-blue-700 rounded p-2 text-white my-8"
+            className={`bg-pink-700 
+                border-4 
+                border-t-pink-300 border-l-pink-300
+                border-b-pink-900 border-r-pink-900
+                rounded p-2 text-white my-8`}
             onClick={newGame}
+            disabled={loading}
             >
                 Novo Jogo
             </button>
 
-            <div className="flex flex-row justify-evenly">
-                <div className="p-10">
+            <div className="flex flex-col md:flex-row justify-evenly">
+                <div className=" mx-10 p-0 md:p-10 flex-1 min-w-fit justify-items-center">
+                    <button 
+                        className={` rounded p-2  my-8 border-4
+                                ${!(gameRunning && playerSum <= 21) ? `bg-gray-700 
+                                    cursor-not-allowed 
+                                    text-neutral-500  border-t-neutral-700 border-l-neutral-700` : `bg-blue-500 
+                                    border-l-blue-400 border-t-blue-400  
+                                    border-b-blue-700 border-r-blue-700
+                                    text-white`
+                                } `
+                            } 
+                        onClick={playerBuyCard}
+                        disabled={(playerSum > 21 || !gameRunning) || loading}
+                    > comprar 1 carta
+                    </button>
+                    
+                    {/* Pontuação Jogador */}
                     <div className="flex flex-row justify-evenly">
                         <h3 className="">Jogador: </h3>
                         <h3 className={` ${playerSum > 21 ? "text-neutral-600" : ""}`}> {playerSum}</h3>
@@ -211,37 +232,39 @@ const Game = () => {
                                 image: card.image,
                                 suit: card.suit,
                                 value: card.value
-                            }))} />
-                    <button 
-                        className={` rounded p-2  my-8
-                            ${!(gameRunning && playerSum <= 21) ? "bg-gray-700 cursor-not-allowed text-neutral-500" : "bg-blue-700 border-l-red text-white"} `} 
-                        onClick={playerBuyCard}
-                        disabled={playerSum >= 21 || !gameRunning}
-                    > comprar 1 carta
-                    </button>
+                            }))
+                        } 
+                    />
+                    
                     
                 </div>
-                <div className="p-10">
+                <div className="mx-10 p-0 md:p-10 flex-1 min-w-fit justify-items-center">
+
+                    <button 
+                        className={` rounded p-2  my-8 border-4
+                            ${!(gameRunning && !runningComp) ? "bg-gray-700 cursor-not-allowed border-l-neutral-700 border-t-neutral-700 text-neutral-500" : 
+                                "bg-orange-500 border-t-orange-400 border-l-orange-400 border-b-orange-700 border-r-orange-700 text-white"} `}
+                        onClick={() => compTurn(compCards, compSum)}
+                        disabled={!gameRunning && runningComp}
+                    > Apostar
+                    </button>
+                     
+                    {/* pontuação Casa */}
                     <div className="flex flex-row justify-evenly">
                         <h3 className="">Casa: </h3>
                         <h3 className={` ${compSum > 21 ? "text-neutral-600" : ""}`}> {compSum}</h3>
                     </div>
+
                     <CardList
-                        color="red"
+                        color="orange"
                         cards={compCards?.map((card) => (
                             {
                                 image: card.image,
                                 suit: card.suit,
                                 value: card.value
-                            }))} />
-                    <button 
-                        className={` rounded p-2  my-8 border-2
-                            ${!(gameRunning && !runningComp) ? "bg-gray-700 cursor-not-allowed border-t-neutral-500 border-l-neutral-500 text-neutral-500" : 
-                                "bg-orange-500  border-b-orange-900 border-r-orange-900 text-white"} `}
-                        onClick={() => compTurn(compCards, compSum)}
-                        disabled={!gameRunning && runningComp}
-                    > Apostar
-                    </button>
+                            }))} 
+                    />
+                    
                 </div>
 
             </div>

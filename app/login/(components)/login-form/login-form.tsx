@@ -82,7 +82,7 @@ const LoginForm = () => {
         type='email'
         name='email'
         id='email'
-        placeholder='E-mail'
+        placeholder='teste@gmail.com'
         value={email}
         handleChange={(_, e) => handleChange(e)}
         readOnly={loadingSubmit}
@@ -93,7 +93,7 @@ const LoginForm = () => {
         type='password'
         name='password'
         id='password'
-        placeholder='Senha'
+        placeholder='123456'
         disabled={false}
         minLength={6}
         value={password}

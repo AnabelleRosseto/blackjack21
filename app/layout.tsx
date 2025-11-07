@@ -24,11 +24,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-br" className='w-full h-full overflow-x-hidden'>
+    <html lang="pt-br" className='w-full flex flex-col min-h-svh overflow-x-hidden'>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} w-full h-full min-h-screen flex flex-col antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} w-full flex flex-col min-h-svh antialiased`}
       >
-        {children}
+        <main className="grow content-center">
+          {children}
+        </main>
         <Footer/>
       </body>
     </html>
